@@ -1,56 +1,56 @@
 'use strict'
-const crypto = require('crypto')
 const Router = require('koa-router')
 const parser = require('koa-body')
+const send = require('koa-send')
+const mysql = require('promise-mysql')
 const router = new Router({ prefix: '/todo' })
-const todos = new Map()
+const dbOptions = {
+  host: 'localhost',
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: 'koa_todo'
+}
 
-router.delete('/delete/:id', parser(), (ctx, next) => {
-  if (todos.has(ctx.params.id)) {
-    todos.delete(ctx.params.id)
-    ctx.status = 200
-  } else {
-    ctx.status = 404
+router.get('/hooks', parser(), async ctx => {
+  try {
+    await send(ctx, 'protected/todo-hooks.js')
+  } catch (e) {
+    console.log(e)
   }
 })
 
-router.patch('/edit/:id', parser(), (ctx, next) => {
+router.delete('/delete/:id', parser(), async ctx => {
+  const conn = await mysql.createConnection(dbOptions)
+  const result = await conn.query({
+    sql: 'DELETE FROM tasks WHERE id=? AND user_id=?',
+    values: [ctx.params.id, ctx.state.user.id]
+  })
+  ctx.status = result.affectedRows ? 200 : 404
+})
+
+router.patch('/edit/:id', parser(), async ctx => {
   const body = ctx.request.body
-  const todo = todos.get(ctx.params.id)
-  if (!todo) {
-    ctx.status = 404
-    return
-  }
-  if (body.task) {
-    todo.task = body.task
-  }
-  ctx.status = 204
+  const conn = await mysql.createConnection(dbOptions)
+  const result = await conn.query({
+    sql: 'UPDATE tasks SET task=? WHERE id=? AND user_id=?',
+    values: [body.task, ctx.params.id, ctx.state.user.id]
+  })
+  ctx.status = result.affectedRows ? 204 : 404
 })
 
-router.post('/create', parser(), (ctx, next) => {
+router.post('/create', parser(), async ctx => {
   const task = ctx.request.body.task
-  if (task) {
-    const id = crypto.randomBytes(20).toString('hex')
-    todos.set(id, { task })
-    ctx.status = 201
-    ctx.body = id
-  } else {
+  if (!task) {
     ctx.status = 400
-  }
-})
-
-router.get('/all', (ctx, next) => {
-  if (!todos.size) {
-    ctx.body = '{}'
     return
   }
-  let str = '{'
-  for (const entry of todos.entries()) {
-    str += `"${entry[0]}" : ${JSON.stringify(entry[1])},`
-  }
-  str = str.slice(0, -1)
-  str += '}'
-  ctx.body = str
+  const conn = await mysql.createConnection(dbOptions)
+  const result = await conn.query({
+    sql: 'INSERT INTO tasks (user_id, task, priority, endtime) VALUES (?, ?, ?, ?)',
+    values: [ctx.state.user.id, task, 1, ctx.request.body.endtime]
+  })
+  ctx.status = 201
+  ctx.body = result.insertId
 })
 
 module.exports = router.routes()

@@ -2,10 +2,9 @@
 require('dotenv').config()
 const https = require('https')
 const Koa = require('koa')
-const Router = require('koa-router')
 const serve = require('koa-static')
+const jwt = require('koa-jwt')
 const app = new Koa()
-const router = new Router()
 
 const certopts = {
   key: process.env.SSL_KEY,
@@ -14,8 +13,11 @@ const certopts = {
 
 app.use(serve('./public'))
 
-router.use(require('./routes/todo'))
+app.use(require('./routes/auth'))
 
-app.use(router.routes())
+app.use(jwt({ secret: process.env.JWT_KEY, cookie: 'koatodo_auth' }))
 
-https.createServer(certopts, app.callback()).listen(443, () => console.log('Server listening on port 443'))
+app.use(require('./routes/todo'))
+
+https.createServer(certopts, app.callback())
+  .listen(443, () => console.log('Server running at https://localhost/#/'))

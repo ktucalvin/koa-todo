@@ -5,17 +5,26 @@
   <link rel="stylesheet" href="index.css" />
 </head>
 <body>
-  <div id="controls">
-    <form id="create-task">
-      <label for="task">Create task</label>
-      <input id="task" name="task" required placeholder="What do you need to do?"/>
+  <div id="login-register">
+    <div id="login-register-tabs">
+      <button id="login-tab-btn">Login</button>
+      <button id="register-tab-btn" class="unselected">Register</button>
+    </div>
+
+    <form id="login-form">
+      <label for="username">Username</label>
+      <input id="username" name="username" />
+      <span id="username-err" class="error-text">&nbsp;</span>
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password" />
+      <div id="register-confirm" class="hidden">
+        <label for="confirm-password">Confirm Password</label>
+        <input id="confirm-password" type="password" />
+      </div>
+      <span id="password-err" class="error-text">&nbsp;</span>
       <input type="submit" />
     </form>
-  </div>
-  <div id="content">
-    <ul id="todos">
-
-    </ul>
+    <div id="loader" hidden></div>
   </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>

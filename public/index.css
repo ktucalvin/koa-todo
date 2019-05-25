@@ -6,19 +6,19 @@ body {
   font-size: 18px;
 }
 
-#content,
-#controls {
-  background-color: #eaeaea;
-  margin: 0 auto;
-  padding: 1em;
-  width: 50vw;
+.hidden {
+  display: none;
+  visibility: hidden;
 }
 
-form label {
-  display: block;
-  margin-bottom: 0.3em;
-  width: 50%;
-  font-size: 20px;
+.invalid {
+  border: 1px solid red;
+  color: red;
+}
+
+.error-text {
+  color: #e22;
+  font-size: 14px;
 }
 
 form input:not([type=submit]) {
@@ -38,8 +38,115 @@ form input[type=submit] {
   transition: 0.4s;
 }
 
+form input[type=submit]:active,
+form input[type=submit]:focus,
 form input[type=submit]:hover {
   background-color: #e22;
+}
+
+/* Auth window */
+#login-register-tabs {
+  display: flex;
+}
+
+#login-register-tabs button {
+  display: block;
+  background-color: #eaeaea;
+  height: 100%;
+  width: 50%;
+  border: none;
+  font-size: 16px;
+  padding: 1em 1.5em;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+#login-register-tabs button:focus,
+#login-register-tabs button:active {
+  outline: none;
+}
+
+#login-register-tabs .unselected {
+  background-color: #aeaeae;
+}
+
+#login-register {
+  margin: 0 auto;
+  margin-top: 10%;
+  width: 30vw;
+  max-width: 300px;
+  background-color: #eaeaea;
+  overflow: hidden;
+}
+
+#login-register form {
+  padding: 1.5em;
+}
+
+#login-register label {
+  display: inline-block;
+  width: 100%;
+  text-align: left;
+  font-size: 15px;
+}
+
+#login-register input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+#password-err {
+  display: block;
+  margin-bottom: 0.35em;
+}
+
+#login-register input[type=submit] {
+  margin-left: 0;
+  margin-bottom: 0;
+}
+
+#loader {
+  position: relative;
+  height: 3px;
+}
+
+#loader::after {
+  content: ' ';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  height: 3px;
+  width: 100%;
+  animation: 1.2s infinite load normal linear;
+  background-color: #e22;
+}
+
+@keyframes load {
+  from {
+    /* width: 5em; */
+    margin-left: -100%;
+  }
+  to {
+    /* width: 0em; */
+    margin-left: 100%;
+  }
+}
+
+/* task manager */
+
+#content,
+#controls {
+  background-color: #eaeaea;
+  margin: 0 auto;
+  padding: 1em;
+  width: 50vw;
+}
+
+#create-task label {
+  display: block;
+  margin-bottom: 0.3em;
+  width: 50%;
+  font-size: 20px;
 }
 
 #content {
@@ -76,4 +183,8 @@ form input[type=submit]:hover {
   border: 0;
   border-bottom: 1px solid #cacaca;
   font-size: 14px;
+}
+
+#logout {
+  float: right;
 }
