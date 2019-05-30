@@ -1,14 +1,11 @@
 'use strict'
 const crypto = require('crypto')
-const path = require('path')
 const mysql = require('promise-mysql')
 const bcrypt = require('bcrypt')
-const pug = require('pug')
 const Router = require('koa-router')
 const parser = require('koa-body')
 const jwt = require('jsonwebtoken')
 const router = new Router({ prefix: '/api/auth' })
-const renderTasks = pug.compileFile(path.join(__dirname, '../views/todo.pug'))
 const dbOptions = {
   host: 'localhost',
   user: process.env.DB_USER,
@@ -43,13 +40,13 @@ router.post('/register', parser(), async ctx => {
     })
     conn.end()
 
+    ctx.cookies.set('koatodo_auth', jwt.sign({
+      id: res.insertId,
+      jti: crypto.randomBytes(20).toString('base64')
+    }, process.env.JWT_KEY, { expiresIn: '12h' }))
+
     ctx.status = 201
-    ctx.body = renderTasks({ todos: [] })
-    ctx.cookies.set('koatodo_auth',
-      jwt.sign({
-        id: res.insertId,
-        jti: crypto.randomBytes(20).toString('base64')
-      }, process.env.JWT_KEY, { expiresIn: '12h' }))
+    ctx.body = '/todo'
   } catch (err) {
     console.log(err)
     ctx.status = 500
@@ -83,19 +80,12 @@ router.post('/login', parser(), async ctx => {
       return
     }
 
+    ctx.cookies.set('koatodo_auth', jwt.sign({
+      id: user[0].id,
+      jti: crypto.randomBytes(20).toString('base64')
+    }, process.env.JWT_KEY, { expiresIn: '12h' }))
     ctx.status = 200
-    const todos = await conn.query({
-      sql: 'SELECT id, task FROM tasks WHERE user_id=?',
-      values: [user[0].id]
-    })
-    conn.end()
-
-    ctx.body = renderTasks({ todos })
-    ctx.cookies.set('koatodo_auth',
-      jwt.sign({
-        id: user[0].id,
-        jti: crypto.randomBytes(20).toString('base64')
-      }, process.env.JWT_KEY, { expiresIn: '12h' }))
+    ctx.body = '/todo'
   } catch (err) {
     console.log(err)
     ctx.status = 500
@@ -107,6 +97,7 @@ router.post('/logout', parser(), async ctx => {
     await jwt.verify(ctx.cookies.get('koatodo_auth'), process.env.JWT_KEY)
     ctx.cookies.set('koatodo_auth')
     ctx.status = 200
+    ctx.body = '/'
   } catch (err) {
     if (err.name === 'JsonWebTokenError') {
       ctx.status = 403

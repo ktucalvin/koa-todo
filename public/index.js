@@ -27,14 +27,12 @@ $(function () {
       $('#loader').show()
       $.post('/api/auth/login', $(this).serialize())
         .then(res => {
-          $('body').prepend(res)
-          $('#login-register').hide()
-          $(this).trigger('reset')
-          $.ajax('/todo/hooks')
+          window.location.replace(res)
         })
         .catch(err => {
           if (err.status === 403) {
             $('#password-err').text('Invalid credentials.')
+            $('#loader').hide()
           }
         })
     } else {
@@ -45,10 +43,7 @@ $(function () {
       $('#loader').show()
       $.post('/api/auth/register', $(this).serialize())
         .then(res => {
-          $('body').prepend(res)
-          $('#login-register').hide()
-          $(this).trigger('reset')
-          $.ajax('/todo/hooks')
+          window.location.replace(res)
         })
     }
   })

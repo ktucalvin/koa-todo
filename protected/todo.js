@@ -1,6 +1,19 @@
 /* eslint-env jquery */
-'use strict';
-(function () {
+'use strict'
+$(function () {
+  $.get('/todo/list')
+    .then(res => {
+      let $todos = ''
+      for (const todo of res) {
+        $todos +=
+        `<li data-id="${todo.id}">
+          <button class="delete-task">X</button>
+          <div contenteditable>${todo.task}</div>
+        </li>`
+      }
+      $('#todos').html($todos)
+    })
+
   $('#create-task').submit(function (e) {
     e.preventDefault()
     $.ajax('/todo/create', {
@@ -37,14 +50,9 @@
   })
 
   $('#logout').on('click', function (e) {
-    $.ajax('/api/auth/logout/', {
-      method: 'POST'
-    })
-      .then(() => {
-        $('#loader').hide()
-        $('#login-register').show()
-        $('#task-manager').remove()
-        $('header').remove()
+    $.post('/api/auth/logout/')
+      .then(res => {
+        window.location.replace(res)
       })
   })
-})()
+})

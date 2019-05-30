@@ -1,8 +1,8 @@
 'use strict'
 const Router = require('koa-router')
 const parser = require('koa-body')
-const send = require('koa-send')
 const mysql = require('promise-mysql')
+const jwt = require('jsonwebtoken')
 const router = new Router({ prefix: '/todo' })
 const dbOptions = {
   host: 'localhost',
@@ -11,12 +11,16 @@ const dbOptions = {
   database: 'koa_todo'
 }
 
-router.get('/hooks', parser(), async ctx => {
-  try {
-    await send(ctx, 'protected/todo-hooks.js')
-  } catch (e) {
-    console.log(e)
-  }
+router.get('/list', parser(), async ctx => {
+  const userId = await jwt.verify(ctx.cookies.get('koatodo_auth'), process.env.JWT_KEY).id
+
+  const conn = await mysql.createConnection(dbOptions)
+  const result = await conn.query({
+    sql: 'SELECT * FROM tasks WHERE user_id=?',
+    values: [userId]
+  })
+  ctx.status = 200
+  ctx.body = result
 })
 
 router.delete('/delete/:id', parser(), async ctx => {

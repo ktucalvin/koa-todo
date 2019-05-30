@@ -19,5 +19,7 @@ app.use(jwt({ secret: process.env.JWT_KEY, cookie: 'koatodo_auth' }))
 
 app.use(require('./routes/todo'))
 
+app.use(serve('./protected', { extensions: ['.html'] }))
+
 https.createServer(certopts, app.callback())
   .listen(443, () => console.log('Server running at https://localhost/#/'))
