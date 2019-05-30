@@ -30,9 +30,9 @@ $(function () {
           window.location.replace(res)
         })
         .catch(err => {
+          $('#loader').hide()
           if (err.status === 403) {
             $('#password-err').text('Invalid credentials.')
-            $('#loader').hide()
           }
         })
     } else {
@@ -44,6 +44,14 @@ $(function () {
       $.post('/api/auth/register', $(this).serialize())
         .then(res => {
           window.location.replace(res)
+        })
+        .catch(err => {
+          $('#loader').hide()
+          if (err.status === 403) {
+            $('#password-err').text('Username already taken')
+            return
+          }
+          console.log(err)
         })
     }
   })
