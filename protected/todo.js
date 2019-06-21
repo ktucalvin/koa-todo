@@ -48,11 +48,4 @@ $(function () {
       .then(() => $(this).parent().remove())
       .catch(() => console.log('delete failed'))
   })
-
-  $('#logout').on('click', function (e) {
-    $.post('/api/auth/logout/')
-      .then(res => {
-        window.location.replace(res)
-      })
-  })
 })

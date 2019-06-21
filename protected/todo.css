@@ -83,3 +83,11 @@ form input[type=submit]:hover {
 #logout {
   float: right;
 }
+
+#logout a {
+  color: black;
+}
+
+#logout a:hover {
+  color: #e22;
+}

@@ -1,10 +1,9 @@
 'use strict'
-const crypto = require('crypto')
 const mysql = require('promise-mysql')
 const bcrypt = require('bcrypt')
 const Router = require('koa-router')
 const parser = require('koa-body')
-const jwt = require('jsonwebtoken')
+const passport = require('koa-passport')
 const router = new Router({ prefix: '/api/auth' })
 const dbOptions = {
   host: 'localhost',
@@ -34,19 +33,26 @@ router.post('/register', parser(), async ctx => {
       return
     }
 
-    const res = await conn.query({
+    await conn.query({
       sql: 'INSERT INTO users (username, hash, salt) VALUES (?, ?, ?)',
       values: [body.username, hash, salt]
     })
     conn.end()
 
-    ctx.cookies.set('koatodo_auth', jwt.sign({
-      id: res.insertId,
-      jti: crypto.randomBytes(20).toString('base64')
-    }, process.env.JWT_KEY, { expiresIn: '12h' }))
+    return passport.authenticate('local', (err, user) => {
+      if (err) {
+        ctx.status = 500
+        return
+      }
 
-    ctx.status = 201
-    ctx.body = '/todo'
+      if (user) {
+        ctx.login(user)
+        ctx.status = 201
+        ctx.body = '/todo'
+      } else {
+        ctx.status = 400
+      }
+    })(ctx)
   } catch (err) {
     console.log(err)
     ctx.status = 500
@@ -54,58 +60,28 @@ router.post('/register', parser(), async ctx => {
 })
 
 router.post('/login', parser(), async ctx => {
-  const body = ctx.request.body
-  if (!body.username || !body.password) {
-    ctx.status = 400
-    return
-  }
-
-  try {
-    const conn = await mysql.createConnection(dbOptions)
-    const user = await conn.query({
-      sql: 'SELECT * FROM users WHERE username=?',
-      values: [body.username]
-    })
-
-    if (!user[0]) {
-      ctx.status = 403
-      ctx.body = 'Invalid credentials'
+  return passport.authenticate('local', (err, user) => {
+    if (err) {
+      ctx.status = 500
       return
     }
 
-    const match = await bcrypt.compare(body.password, user[0].hash)
-    if (!match) {
-      ctx.status = 403
-      ctx.body = 'Invalid credentials'
-      return
+    if (user) {
+      ctx.login(user)
+      ctx.body = '/todo'
+    } else {
+      ctx.status = 400
+      ctx.body = '/'
     }
-
-    ctx.cookies.set('koatodo_auth', jwt.sign({
-      id: user[0].id,
-      jti: crypto.randomBytes(20).toString('base64')
-    }, process.env.JWT_KEY, { expiresIn: '12h' }))
-    ctx.status = 200
-    ctx.body = '/todo'
-  } catch (err) {
-    console.log(err)
-    ctx.status = 500
-  }
+  })(ctx)
 })
 
-router.post('/logout', parser(), async ctx => {
-  try {
-    await jwt.verify(ctx.cookies.get('koatodo_auth'), process.env.JWT_KEY)
-    ctx.cookies.set('koatodo_auth')
-    ctx.status = 200
-    ctx.body = '/'
-  } catch (err) {
-    if (err.name === 'JsonWebTokenError') {
-      ctx.status = 403
-      ctx.body = 'Token is invalid'
-    } else {
-      console.log(err)
-      ctx.status = 500
-    }
+router.get('/logout', async ctx => {
+  if (ctx.isAuthenticated) {
+    ctx.logout()
+    ctx.redirect('/')
+  } else {
+    ctx.status = 401
   }
 })
 

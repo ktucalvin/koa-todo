@@ -2,7 +2,6 @@
 const Router = require('koa-router')
 const parser = require('koa-body')
 const mysql = require('promise-mysql')
-const jwt = require('jsonwebtoken')
 const router = new Router({ prefix: '/todo' })
 const dbOptions = {
   host: 'localhost',
@@ -12,12 +11,10 @@ const dbOptions = {
 }
 
 router.get('/list', parser(), async ctx => {
-  const userId = await jwt.verify(ctx.cookies.get('koatodo_auth'), process.env.JWT_KEY).id
-
   const conn = await mysql.createConnection(dbOptions)
   const result = await conn.query({
     sql: 'SELECT * FROM tasks WHERE user_id=?',
-    values: [userId]
+    values: [ctx.state.user.id]
   })
   ctx.status = 200
   ctx.body = result
